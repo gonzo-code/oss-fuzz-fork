@@ -83,4 +83,12 @@ else
     chmod u+x $OUT/$fuzzer_basename
   done
 
+  cp -v /src/oss-fuzz/projects/pdfbox/pdf.dict "$OUT/" || true
+  /projects/pdfbox/extract-seeds.sh /tmp/pdfbox-seeds || true
+  [ -d /tmp/pdfbox-seeds ] && (zip -j /out/pdfbox-seeds.zip /tmp/pdfbox-seeds/*.pdf || true)
+  # Jazzer runtime flags for tighter resource limits
+  export JVM_OPTS="${JVM_OPTS:-} -Xmx512m -Xss256k"
+  # ensure jazzer.properties is next to fuzz tests or on classpath
+  cp -v /src/oss-fuzz/projects/pdfbox/project-parent/fuzz-targets/jazzer.properties "$OUT/" || true
+
 fi

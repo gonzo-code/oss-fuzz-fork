@@ -39,6 +39,8 @@ RUN cd /work && /bin/bash extract-fonts.sh && rm extract-fonts.sh
 
 FROM gcr.io/oss-fuzz-base/base-builder-jvm
 
+RUN apt-get update && apt-get install -y --no-install-recommends mupdf-tools && rm -rf /var/lib/apt/lists/*
+
 COPY --from=base /work/*_seed_corpus.zip $SRC
 
 RUN git clone --depth 1 https://github.com/google/fuzzing && \

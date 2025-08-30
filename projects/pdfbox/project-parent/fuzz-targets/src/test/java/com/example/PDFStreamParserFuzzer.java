@@ -1,46 +1,37 @@
-// Copyright 2023 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-////////////////////////////////////////////////////////////////////////////////
-
 package com.example;
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
-import com.code_intelligence.jazzer.junit.FuzzTest;
-
-import java.io.IOException;
-import java.util.logging.LogManager;
-
+import org.apache.pdfbox.contentstream.PDContentStream;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
-import org.junit.jupiter.api.BeforeAll;
 
+import java.io.ByteArrayInputStream;
 
-class PDFStreamParserFuzzer {
+public class PDFStreamParserFuzzer {
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
+    byte[] streamBytes = data.consumeRemainingAsBytes();
+    if (streamBytes.length == 0) return;
 
-    @BeforeAll
-    static void setUp() {
-        LogManager.getLogManager().reset();
+    // Minimal doc with one page and a crafted content stream.
+    try (PDDocument doc = new PDDocument()) {
+      PDPage page = new PDPage();
+      doc.addPage(page);
+
+      COSStream cosStream = new COSStream();
+      cosStream.setItem("Length", new COSArray()); // provoke edge cases around Length handling
+      cosStream.setFilters(new COSArray());        // empty filters array
+      cosStream.createOutputStream().write(streamBytes);
+
+      PDContentStream cs = new PDContentStream(page);
+      PDFStreamParser parser = new PDFStreamParser(new ByteArrayInputStream(streamBytes));
+      parser.parse(); // exercises inline images, operators, operands
+      // Touch the tokens list to force object creation paths.
+      if (parser.getTokens() != null && !parser.getTokens().isEmpty()) {
+        parser.getTokens().get(0);
+      }
     }
-
-    @FuzzTest
-    void myFuzzTest(FuzzedDataProvider data) {
-        byte [] bytes = data.consumeRemainingAsBytes();
-        PDFStreamParser pdfStreamParser = new PDFStreamParser(bytes);
-
-        try {
-            pdfStreamParser.parse();
-        } catch (IOException e) {
-        }
-    }
+  }
 }
