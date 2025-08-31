@@ -55,8 +55,11 @@ public class JunrarFuzzer {
                                 }
                         } catch (Throwable ignored) {}
 
+                        // Exercise various accessors on Archive.
                         try { archive.getFileHeaders(); } catch (Throwable ignored) {}
                         try { archive.getHeaders(); } catch (Throwable ignored) {}
+                        try { archive.isOldFormat(); } catch (Throwable ignored) {}
+                        try { archive.isPasswordProtected(); } catch (Throwable ignored) {}
 
                         try {
                                 MainHeader mh = archive.getMainHeader();
@@ -64,7 +67,7 @@ public class JunrarFuzzer {
                                         try { mh.getEncryptVersion(); } catch (Throwable ignored) {}
                                         try { mh.isEncrypted(); } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException ignored) {}
+                        } catch (Throwable ignored) {}
 
                         try {
                                 Volume vol = archive.getVolume();
@@ -72,28 +75,29 @@ public class JunrarFuzzer {
                                         try { vol.getChannel(); } catch (Throwable ignored) {}
                                         try { vol.getLength(); } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException ignored) {}
+                        } catch (Throwable ignored) {}
 
                         boolean archiveEncrypted = false;
                         try { archiveEncrypted = archive.isEncrypted(); } catch (Throwable ignored) {}
 
+                        // Iterate over all file headers using nextFileHeader to also
+                        // cover Archive.nextFileHeader().
                         try {
-                                for (FileHeader fh : archive.getFileHeaders()) {
+                                FileHeader fh;
+                                while ((fh = archive.nextFileHeader()) != null) {
                                         touchHeader(fh);
                                         boolean headerEncrypted = false;
-                                        try { headerEncrypted = fh != null && fh.isEncrypted(); } catch (Throwable ignored) {}
+                                        try { headerEncrypted = fh.isEncrypted(); } catch (Throwable ignored) {}
                                         if (archiveEncrypted || headerEncrypted) {
                                                 continue;
                                         }
                                         try {
-                                                if (fh != null && fh.getUnpSize() < (1 << 20)) {
+                                                if (fh.getUnpSize() < (1 << 20)) {
                                                         archive.extractFile(fh, OutputStream.nullOutputStream());
                                                 }
                                         } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException e) {
-                                return;
-                        }
+                        } catch (Throwable ignored) {}
 
                 } catch (IOException | RarException ignored) {
                         return;
