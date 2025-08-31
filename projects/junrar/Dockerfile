@@ -34,5 +34,6 @@ RUN git clone --depth 1 https://github.com/strongcourage/fuzzing-corpus.git && \
 RUN git clone --depth 1 https://github.com/junrar/junrar.git junrar
 
 COPY build.sh $SRC/
-COPY JunrarFuzzer.java $SRC/
+COPY junrar.dict $SRC/projects/junrar/
+COPY com/github/junrar/fuzz/*.java $SRC/com/github/junrar/fuzz/
 WORKDIR $SRC/junrar
