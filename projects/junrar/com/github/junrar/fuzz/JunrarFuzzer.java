@@ -91,7 +91,7 @@ public class JunrarFuzzer {
                                                 }
                                         } catch (Throwable ignored) {}
                                 }
-                        } catch (RarException e) {
+                        } catch (RuntimeException e) {
                                 return;
                         }
 
