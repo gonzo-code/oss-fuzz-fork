@@ -1,7 +1,7 @@
 package com.github.junrar.fuzz;
 
-import com.github.junrar.unpack.decode.FileNameDecoder;
-import com.code-intelligence.jazzer.api.FuzzedDataProvider;
+import com.github.junrar.rarfile.FileNameDecoder;
+import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
 public class FileNameDecoderFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
