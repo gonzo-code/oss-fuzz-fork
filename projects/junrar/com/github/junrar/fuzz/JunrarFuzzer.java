@@ -45,10 +45,8 @@ public class JunrarFuzzer {
         }
 
         public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-
-                try {
-                        InputStream inputStream = new ByteArrayInputStream(data.consumeRemainingAsBytes());
-                        Archive archive = new Archive(inputStream);
+                try (InputStream inputStream = new ByteArrayInputStream(data.consumeRemainingAsBytes());
+                     Archive archive = new Archive(inputStream)) {
 
                         try {
                                 SeekableReadOnlyByteChannel channel = archive.getChannel();
@@ -97,8 +95,7 @@ public class JunrarFuzzer {
                                 return;
                         }
 
-                } catch (IOException e1) {
-                } catch (RarException e2) {
+                } catch (IOException | RarException ignored) {
                         return;
                 }
         }
