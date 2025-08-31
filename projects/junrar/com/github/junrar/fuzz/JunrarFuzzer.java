@@ -31,13 +31,16 @@ import com.github.junrar.rarfile.MainHeader;
 import com.github.junrar.volume.Volume;
 
 public class JunrarFuzzer {
-        private static void safeTouchHeader(com.github.junrar.rarfile.FileHeader fh) {
+        private static void touchHeader(FileHeader fh) {
+                if (fh == null) {
+                        return;
+                }
+                try { fh.isEncrypted(); } catch (Throwable ignored) {}
+                try { fh.isDirectory(); } catch (Throwable ignored) {}
                 try {
-                        if (fh != null) {
-                                try { fh.getCrc(); } catch (Throwable ignored) {}
-                                try { fh.getFileName(); } catch (Throwable ignored) {}
-                        }
-                } catch (RuntimeException ignored) {
+                        fh.getFileName();
+                } catch (Throwable ignored) {
+                        try { fh.toString(); } catch (Throwable ignored2) {}
                 }
         }
 
@@ -73,16 +76,15 @@ public class JunrarFuzzer {
                                 }
                         } catch (RuntimeException ignored) {}
 
-                        try { archive.isEncrypted(); } catch (Throwable ignored) {}
+                        boolean archiveEncrypted = false;
+                        try { archiveEncrypted = archive.isEncrypted(); } catch (Throwable ignored) {}
 
                         try {
                                 for (FileHeader fh : archive.getFileHeaders()) {
-                                        safeTouchHeader(fh);
-                                        boolean enc = false;
-                                        try {
-                                                enc = archive.getMainHeader() != null && archive.getMainHeader().isEncrypted();
-                                        } catch (Throwable ignored) {}
-                                        if (enc || (fh != null && fh.isEncrypted())) {
+                                        touchHeader(fh);
+                                        boolean headerEncrypted = false;
+                                        try { headerEncrypted = fh != null && fh.isEncrypted(); } catch (Throwable ignored) {}
+                                        if (archiveEncrypted || headerEncrypted) {
                                                 continue;
                                         }
                                         try {
