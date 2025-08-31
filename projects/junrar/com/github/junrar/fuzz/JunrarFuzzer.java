@@ -31,17 +31,20 @@ import com.github.junrar.rarfile.MainHeader;
 import com.github.junrar.volume.Volume;
 
 public class JunrarFuzzer {
+        private static final OutputStream NULL_OUTPUT_STREAM = new OutputStream() {
+                @Override
+                public void write(int b) {}
+        };
+
         private static void touchHeader(FileHeader fh) {
                 if (fh == null) {
                         return;
                 }
-                try { fh.isEncrypted(); } catch (Throwable ignored) {}
+                try { fh.getCTime(); } catch (Throwable ignored) {}
                 try { fh.isDirectory(); } catch (Throwable ignored) {}
-                try {
-                        fh.getFileName();
-                } catch (Throwable ignored) {
-                        try { fh.toString(); } catch (Throwable ignored2) {}
-                }
+                try { fh.hasVolumeNumber(); } catch (Throwable ignored) {}
+                try { fh.getFileNameString(); } catch (Throwable ignored) {}
+                try { fh.isEncrypted(); } catch (Throwable ignored) {}
         }
 
         public static void fuzzerTestOneInput(FuzzedDataProvider data) {
@@ -55,8 +58,11 @@ public class JunrarFuzzer {
                                 }
                         } catch (Throwable ignored) {}
 
+                        // Exercise various accessors on Archive.
                         try { archive.getFileHeaders(); } catch (Throwable ignored) {}
                         try { archive.getHeaders(); } catch (Throwable ignored) {}
+                        try { archive.isOldFormat(); } catch (Throwable ignored) {}
+                        try { archive.isPasswordProtected(); } catch (Throwable ignored) {}
 
                         try {
                                 MainHeader mh = archive.getMainHeader();
@@ -64,7 +70,7 @@ public class JunrarFuzzer {
                                         try { mh.getEncryptVersion(); } catch (Throwable ignored) {}
                                         try { mh.isEncrypted(); } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException ignored) {}
+                        } catch (Throwable ignored) {}
 
                         try {
                                 Volume vol = archive.getVolume();
@@ -72,31 +78,24 @@ public class JunrarFuzzer {
                                         try { vol.getChannel(); } catch (Throwable ignored) {}
                                         try { vol.getLength(); } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException ignored) {}
+                        } catch (Throwable ignored) {}
 
-                        boolean archiveEncrypted = false;
-                        try { archiveEncrypted = archive.isEncrypted(); } catch (Throwable ignored) {}
+                        try { archive.isEncrypted(); } catch (Throwable ignored) {}
 
+                        // Iterate over all file headers using nextFileHeader to also
+                        // cover Archive.nextFileHeader().
                         try {
-                                for (FileHeader fh : archive.getFileHeaders()) {
+                                FileHeader fh;
+                                while ((fh = archive.nextFileHeader()) != null) {
                                         touchHeader(fh);
-                                        boolean headerEncrypted = false;
-                                        try { headerEncrypted = fh != null && fh.isEncrypted(); } catch (Throwable ignored) {}
-                                        if (archiveEncrypted || headerEncrypted) {
-                                                continue;
-                                        }
                                         try {
-                                                if (fh != null && fh.getUnpSize() < (1 << 20)) {
-                                                        archive.extractFile(fh, OutputStream.nullOutputStream());
-                                                }
+                                                archive.extractFile(fh, NULL_OUTPUT_STREAM);
                                         } catch (Throwable ignored) {}
                                 }
-                        } catch (RuntimeException e) {
-                                return;
-                        }
+                        } catch (Throwable ignored) {}
 
                 } catch (IOException | RarException ignored) {
-                        return;
+                        // Ignore exceptions from invalid archives.
                 }
         }
 }
