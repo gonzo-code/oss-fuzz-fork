@@ -1,4 +1,5 @@
 #!/bin/bash -eu
+set -euxo pipefail
 # Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,6 @@
 ################################################################################
 
 mv $SRC/*.zip $OUT
-#mv $SRC/{*.zip,*.dict} $OUT
 
 ./gradlew build
 CURRENT_VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{printf $2}')
@@ -34,10 +34,37 @@ BUILD_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "$OUT/%s:"):$JAZZER_API_PATH
 # All .jar and .class files lie in the same directory as the fuzzer at runtime.
 RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_dir
 
-for fuzzer in $(find $SRC -maxdepth 1 -name '*Fuzzer.java'); do
+# Copy dict if present
+if [[ -f "$SRC/projects/junrar/junrar.dict" ]]; then
+  cp "$SRC/projects/junrar/junrar.dict" "$OUT/junrar.dict"
+fi
+
+# Create seed corpus if seeds exist (non-fatal if none)
+SEED_DIR="$SRC/projects/junrar/seeds"
+if [[ -d "$SEED_DIR" ]]; then
+  shopt -s nullglob
+  SEEDS=("$SEED_DIR"/*)
+  if (( ${#SEEDS[@]} )); then
+    (cd "$SEED_DIR" && zip -q -r "$OUT/junrar_seed_corpus.zip" .)
+  fi
+  shopt -u nullglob
+fi
+
+# Provide safe default Jazzer flags
+export JAZZER_FLAGS="${JAZZER_FLAGS:-} -use_value_profile=1 -keep_going=1 -timeout=60"
+if [[ -f "$OUT/junrar.dict" ]]; then
+  export JAZZER_FLAGS="$JAZZER_FLAGS -dict=$OUT/junrar.dict"
+fi
+
+for fuzzer in $(find $SRC -name '*Fuzzer.java'); do
   fuzzer_basename=$(basename -s .java $fuzzer)
-  javac -cp $BUILD_CLASSPATH $fuzzer
-  cp $SRC/$fuzzer_basename.class $OUT/
+  fuzzer_pkg=$(grep -E '^package ' "$fuzzer" | sed 's/package \(.*\);/\1/')
+  if [[ -n "$fuzzer_pkg" ]]; then
+    fuzzer_classname="$fuzzer_pkg.$fuzzer_basename"
+  else
+    fuzzer_classname="$fuzzer_basename"
+  fi
+  javac -cp $BUILD_CLASSPATH -d $OUT $fuzzer
 
   # Create an execution wrapper that executes Jazzer with the correct arguments.
   echo "#!/bin/bash
@@ -51,8 +78,9 @@ fi
 LD_LIBRARY_PATH=\"$JVM_LD_LIBRARY_PATH\":\$this_dir \
 \$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
 --cp=$RUNTIME_CLASSPATH \
---target_class=$fuzzer_basename \
+--target_class=$fuzzer_classname \
 --jvm_args=\"\$mem_settings\" \
+$JAZZER_FLAGS \
 \$@" > $OUT/$fuzzer_basename
   chmod u+x $OUT/$fuzzer_basename
 done
