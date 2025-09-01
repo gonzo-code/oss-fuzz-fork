@@ -18,10 +18,10 @@ package com.github.junrar.fuzz;
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
@@ -46,24 +46,22 @@ public class JunrarFuzzer {
                 try { fh.getFileNameString(); } catch (Throwable ignored) {}
                 try { fh.isEncrypted(); } catch (Throwable ignored) {}
         }
-
+  
         public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-                try (InputStream inputStream = new ByteArrayInputStream(data.consumeRemainingAsBytes());
+                try (InputStream inputStream =
+                                new ByteArrayInputStream(data.consumeRemainingAsBytes());
                      Archive archive = new Archive(inputStream)) {
 
-                        try {
-                                SeekableReadOnlyByteChannel channel = archive.getChannel();
-                                if (channel != null) {
-                                        channel.getPosition();
-                                }
-                        } catch (Throwable ignored) {}
+                        SeekableReadOnlyByteChannel channel = archive.getChannel();
+                        if (channel != null) {
+                                try { channel.getPosition(); } catch (Throwable ignored) {}
+                        }
 
                         // Exercise various accessors on Archive.
                         try { archive.getFileHeaders(); } catch (Throwable ignored) {}
                         try { archive.getHeaders(); } catch (Throwable ignored) {}
                         try { archive.isOldFormat(); } catch (Throwable ignored) {}
                         try { archive.isPasswordProtected(); } catch (Throwable ignored) {}
-
                         try {
                                 MainHeader mh = archive.getMainHeader();
                                 if (mh != null) {
