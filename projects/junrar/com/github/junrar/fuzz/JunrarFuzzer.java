@@ -47,6 +47,7 @@ public class JunrarFuzzer {
                         try { archive.isOldFormat(); } catch (Throwable ignored) {}
                         try { archive.isPasswordProtected(); } catch (Throwable ignored) {}
 
+
                         MainHeader mh = archive.getMainHeader();
                         if (mh != null) {
                                 try { mh.getEncryptVersion(); } catch (Throwable ignored) {}
@@ -68,11 +69,11 @@ public class JunrarFuzzer {
                                 try { fh.hasVolumeNumber(); } catch (Throwable ignored) {}
                                 try { fh.isEncrypted(); } catch (Throwable ignored) {}
                                 try { fh.isSubBlock(); } catch (Throwable ignored) {}
-
                                 try {
                                         archive.extractFile(fh, OutputStream.nullOutputStream());
                                 } catch (Throwable ignored) {}
                         }
+
                 } catch (IOException | RarException ignored) {
                         // Ignore exceptions from invalid archives.
                 }
