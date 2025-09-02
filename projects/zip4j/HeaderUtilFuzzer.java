@@ -1,7 +1,5 @@
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.ZipModel;
-import net.lingala.zip4j.headers.HeaderUtil;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -37,7 +35,6 @@ public class HeaderUtilFuzzer {
       }
 
       ZipFile zipFile = new ZipFile(tempFile);
-      ZipModel zipModel = zipFile.getZipModel();
 
       for (int i = 0; i < names.size(); i++) {
         String baseName = names.get(i);
@@ -47,7 +44,7 @@ public class HeaderUtilFuzzer {
           for (int k = 0; k < 2; k++) {
             String attempt = k == 0 ? candidate : candidate.toUpperCase();
             try {
-              FileHeader header = HeaderUtil.getFileHeader(zipModel, attempt);
+              FileHeader header = zipFile.getFileHeader(attempt);
               if (header != null) {
                 header.isDirectory();
               }
