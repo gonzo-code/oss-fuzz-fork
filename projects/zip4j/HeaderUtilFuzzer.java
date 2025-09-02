@@ -43,21 +43,17 @@ public class HeaderUtilFuzzer {
           String candidate = baseName + j;
           for (int k = 0; k < 2; k++) {
             String attempt = k == 0 ? candidate : candidate.toUpperCase();
-            try {
-              FileHeader header = zipFile.getFileHeader(attempt);
-              if (header != null) {
-                header.isDirectory();
-              }
-            } catch (ZipException e) {
-              // Expected for malformed inputs
+            FileHeader header = zipFile.getFileHeader(attempt);
+            if (header != null) {
+              header.isDirectory();
             }
           }
         }
       }
 
       tempFile.delete();
-    } catch (IOException e) {
-      // Ignore
+    } catch (IOException | ZipException e) {
+      throw new RuntimeException(e);
     }
   }
 }
