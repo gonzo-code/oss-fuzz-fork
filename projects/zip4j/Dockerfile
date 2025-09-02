@@ -35,5 +35,5 @@ RUN git clone --depth 1 https://github.com/dvyukov/go-fuzz-corpus && \
 RUN git clone --depth 1 https://github.com/srikanth-lingala/zip4j.git zip4j
 
 COPY build.sh $SRC/
-COPY Zip4jFuzzer.java $SRC/
+COPY *.java $SRC/
 WORKDIR $SRC/zip4j
