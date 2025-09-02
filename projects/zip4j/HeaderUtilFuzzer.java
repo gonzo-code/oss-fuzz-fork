@@ -43,12 +43,7 @@ public class HeaderUtilFuzzer {
           String candidate = baseName + j;
           for (int k = 0; k < 2; k++) {
             String attempt = k == 0 ? candidate : candidate.toUpperCase();
-            FileHeader header;
-            try {
-              header = zipFile.getFileHeader(attempt);
-            } catch (ZipException e) {
-              throw new RuntimeException(e);
-            }
+            FileHeader header = zipFile.getFileHeader(attempt);
             if (header != null) {
               header.isDirectory();
             }
@@ -57,8 +52,8 @@ public class HeaderUtilFuzzer {
       }
 
       tempFile.delete();
-    } catch (IOException e) {
-      // Ignore
+    } catch (IOException | ZipException e) {
+      throw new RuntimeException(e);
     }
   }
 }
