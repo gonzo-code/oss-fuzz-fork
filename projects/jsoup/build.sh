@@ -30,6 +30,11 @@ ALL_JARS="jsoup.jar"
 # Jazzer API.
 BUILD_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "$OUT/%s:"):$JAZZER_API_PATH
 
+if [[ -n ${FUZZ_INTROSPECTOR:-} ]]; then
+  fi_jar=$(find /fuzz-introspector -name 'fuzz-introspector-jvm-*.jar' -print -quit)
+  BUILD_CLASSPATH="$BUILD_CLASSPATH:$fi_jar"
+fi
+
 # All .jar and .class files lie in the same directory as the fuzzer at runtime.
 RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_dir
 
