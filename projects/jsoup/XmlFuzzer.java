@@ -16,11 +16,26 @@
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
-import org.jsoup.Jsoup;
-import org.jsoup.parser.Parser;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import org.jsoup.parser.XmlTreeBuilder;
 
 public class XmlFuzzer {
-  public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-    Jsoup.parse(data.consumeRemainingAsString(), "", Parser.xmlParser());
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
+    String input = data.consumeRemainingAsString();
+    XmlTreeBuilder treeBuilder = new XmlTreeBuilder();
+
+    Method parse = XmlTreeBuilder.class.getDeclaredMethod("parse", String.class, String.class);
+    parse.setAccessible(true);
+    try {
+      parse.invoke(treeBuilder, input, "");
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof Exception) {
+        throw (Exception) cause;
+      }
+      throw new RuntimeException(cause);
+    }
   }
 }
