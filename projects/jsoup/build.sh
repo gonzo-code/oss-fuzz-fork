@@ -19,6 +19,7 @@
 mv $SRC/{*.zip,*.dict} $OUT
 
 # Remove central publishing plugin that pulls additional build extensions.
+
 perl -0 -i -pe 's|<plugin>\s*<groupId>org\.sonatype\.central</groupId>.*?</plugin>||s' pom.xml
 
 MAVEN_ARGS="-Dmaven.test.skip=true -Djavac.src.version=15 -Djavac.target.version=15"
@@ -41,10 +42,10 @@ fi
 # All .jar and .class files lie in the same directory as the fuzzer at runtime.
 RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_dir
 
-for fuzzer in $(find $SRC -name '*Fuzzer.java'); do
-  fuzzer_basename=$(basename -s .java $fuzzer)
-  javac -cp $BUILD_CLASSPATH $fuzzer
-  cp $SRC/$fuzzer_basename.class $OUT/
+for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
+  fuzzer_basename=$(basename -s .java "$fuzzer")
+  javac -cp $BUILD_CLASSPATH "$fuzzer"
+  cp "$(dirname "$fuzzer")/$fuzzer_basename.class" "$OUT/"
 
   # Create an execution wrapper that executes Jazzer with the correct arguments.
   echo "#!/bin/bash
