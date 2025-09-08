@@ -47,6 +47,8 @@ for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
   extra_args=""
   if [[ "$fuzzer_basename" == "XmlFuzzer" ]]; then
     extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
+  elif [[ "$fuzzer_basename" == "StreamParserFuzzer" ]]; then
+    extra_args="-focus_function=org.jsoup.parser.Parser.htmlParser"
   fi
   javac -cp $BUILD_CLASSPATH "$fuzzer"
   cp "$(dirname "$fuzzer")/$fuzzer_basename.class" "$OUT/"
