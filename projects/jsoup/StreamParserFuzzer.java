@@ -23,6 +23,12 @@ public class StreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     Parser parser = Parser.htmlParser();
     StreamParser sp = new StreamParser(parser);
-    sp.parse(data.consumeRemainingAsString(), "");
+
+    boolean inAttribute = data.consumeBoolean();
+    String input = data.consumeRemainingAsString();
+
+    sp.parse(input, "");
+    // Exercise entity unescaping with guaranteed '&' to avoid early return.
+    Parser.unescapeEntities(input + "&", inAttribute);
   }
 }
