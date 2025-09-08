@@ -44,6 +44,10 @@ RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_di
 
 for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
   fuzzer_basename=$(basename -s .java "$fuzzer")
+  extra_args=""
+  if [[ "$fuzzer_basename" == "XmlFuzzer" ]]; then
+    extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
+  fi
   javac -cp $BUILD_CLASSPATH "$fuzzer"
   cp "$(dirname "$fuzzer")/$fuzzer_basename.class" "$OUT/"
 
@@ -56,11 +60,12 @@ if [[ \"\$@\" =~ (^| )-runs=[0-9]+($| ) ]]; then
 else
   mem_settings='-Xmx2048m:-Xss1024k'
 fi
-LD_LIBRARY_PATH=\"$JVM_LD_LIBRARY_PATH\":\$this_dir \
-\$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
---cp=$RUNTIME_CLASSPATH \
---target_class=$fuzzer_basename \
---jvm_args=\"\$mem_settings\" \
-\$@" > $OUT/$fuzzer_basename
+  LD_LIBRARY_PATH=\"$JVM_LD_LIBRARY_PATH\":\$this_dir \
+  \$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
+  --cp=$RUNTIME_CLASSPATH \
+  --target_class=$fuzzer_basename \
+  --jvm_args=\"\$mem_settings\" \
+  $extra_args \
+  \$@" > $OUT/$fuzzer_basename
   chmod u+x $OUT/$fuzzer_basename
 done

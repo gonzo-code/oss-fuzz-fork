@@ -16,23 +16,36 @@
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
+
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import org.jsoup.parser.Parser;
 
 import org.jsoup.parser.XmlTreeBuilder;
 
 public class XmlFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
     String input = data.consumeRemainingAsString();
-    XmlTreeBuilder treeBuilder = new XmlTreeBuilder();
 
-    Method parse = XmlTreeBuilder.class.getDeclaredMethod("parse", String.class, String.class);
+    Parser parser = Parser.xmlParser();
+
+    Field treeBuilderField = Parser.class.getDeclaredField("treeBuilder");
+    treeBuilderField.setAccessible(true);
+    XmlTreeBuilder treeBuilder = (XmlTreeBuilder) treeBuilderField.get(parser);
+
+    Method parse =
+        XmlTreeBuilder.class.getDeclaredMethod(
+            "parse", String.class, String.class, Parser.class);
     parse.setAccessible(true);
     try {
-      parse.invoke(treeBuilder, input, "");
+      parse.invoke(treeBuilder, input, "", parser);
     } catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
-      if (cause instanceof Exception) {
+      if (cause instanceof Error) {
+        throw (Error) cause;
+      } else if (cause instanceof Exception) {
         throw (Exception) cause;
       }
       throw new RuntimeException(cause);
