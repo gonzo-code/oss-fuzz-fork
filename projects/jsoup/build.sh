@@ -19,7 +19,8 @@
 mv $SRC/{*.zip,*.dict} $OUT
 
 # Remove central publishing plugin that pulls additional build extensions.
-sed -i '/<groupId>org.sonatype.central<\/groupId>/,/<\/plugin>/d' pom.xml
+
+perl -0 -i -pe 's|<plugin>\s*<groupId>org\.sonatype\.central</groupId>.*?</plugin>||s' pom.xml
 
 MAVEN_ARGS="-Dmaven.test.skip=true -Djavac.src.version=15 -Djavac.target.version=15"
 $MVN package org.apache.maven.plugins:maven-shade-plugin:3.2.4:shade $MAVEN_ARGS
