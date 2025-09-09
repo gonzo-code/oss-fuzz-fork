@@ -19,6 +19,8 @@ import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import org.jsoup.parser.Parser;
 import org.jsoup.parser.StreamParser;
 
+import java.io.IOException;
+
 public class StreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     Parser parser = Parser.htmlParser();
@@ -51,7 +53,12 @@ public class StreamParserFuzzer {
     String rest = data.consumeRemainingAsString();
     allInput.append(rest);
     sp.parse(rest, baseUri);
-    sp.finish();
+    try {
+      sp.complete();
+    } catch (IOException ignored) {
+      // Ignore I/O errors from the parser.
+    }
+    sp.close();
 
     // Exercise entity unescaping with guaranteed '&' to avoid early return.
     Parser.unescapeEntities(allInput.append('&').toString(), inAttribute);
