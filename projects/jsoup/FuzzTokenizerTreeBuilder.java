@@ -19,30 +19,27 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
-import org.jsoup.parser.TagSet;
 
 public class FuzzTokenizerTreeBuilder {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     String input = data.consumeRemainingAsString();
 
-    Parser parser = Parser.htmlParser().newInstance();
-    parser.tagSet(TagSet.Html());
-
     Document doc;
     try {
-      doc = parser.parseInput(input, "");
+      doc = Jsoup.parse(input);
     } catch (IllegalArgumentException | IllegalStateException e) {
       return;
     }
 
     Element ctx = new Element("div");
     try {
-      parser.parseFragmentInput(input, ctx, "");
+      Parser.parseFragment(input, ctx, "");
     } catch (IllegalArgumentException | IllegalStateException e) {
       // ignore expected errors
     }
 
     String html = doc.outerHtml();
     Jsoup.parse(html);
+    Parser.parseBodyFragment(html, "");
   }
 }
