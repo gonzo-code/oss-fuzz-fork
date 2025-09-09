@@ -17,9 +17,18 @@
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
 import org.jsoup.Jsoup;
+import org.jsoup.parser.Parser;
 
 public class HtmlFuzzer {
+  private static final int MAX_INPUT_SIZE = 10000;
+
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-    Jsoup.parse(data.consumeRemainingAsString());
+    boolean inAttribute = data.consumeBoolean();
+    String baseUri = data.consumeString(100);
+    String html = data.consumeString(MAX_INPUT_SIZE);
+
+    Jsoup.parse(html, baseUri);
+    Jsoup.parseBodyFragment(html, baseUri);
+    Parser.unescapeEntities(html, inAttribute);
   }
 }
