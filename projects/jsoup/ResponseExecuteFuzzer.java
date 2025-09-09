@@ -1,4 +1,3 @@
-
 package org.jsoup.helper;
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
@@ -8,8 +7,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import org.jsoup.Connection;
-import org.jsoup.helper.KeyVal;
-
 
 public class ResponseExecuteFuzzer {
   public static void fuzzerInitialize() {
@@ -47,7 +44,9 @@ public class ResponseExecuteFuzzer {
       }
       int dataPairs = data.consumeInt(0, 3);
       for (int d = 0; d < dataPairs; d++) {
-        request.data().add(KeyVal.create(data.consumeString(10), data.consumeString(20)));
+        request
+            .data()
+            .add(Connection.KeyVal.create(data.consumeString(10), data.consumeString(20)));
       }
 
       HttpConnection.Response previousResponse = null;
