@@ -20,15 +20,14 @@ import org.jsoup.Jsoup;
 import org.jsoup.parser.Parser;
 
 public class HtmlFuzzer {
-  private static final int MAX_INPUT_SIZE = 10000;
+  private static final int MAX_INPUT_SIZE = 10_000;
 
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-    boolean inAttribute = data.consumeBoolean();
-    String baseUri = data.consumeString(100);
-    String html = data.consumeString(MAX_INPUT_SIZE);
-
-    Jsoup.parse(html, baseUri);
-    Jsoup.parseBodyFragment(html, baseUri);
-    Parser.unescapeEntities(html, inAttribute);
+    String html = data.consumeRemainingAsString();
+    if (html.length() > MAX_INPUT_SIZE) {
+      return;
+    }
+    Jsoup.parse(html);
+    Jsoup.parseBodyFragment(html);
   }
 }
