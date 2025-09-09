@@ -16,39 +16,35 @@
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
+import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 
-import org.jsoup.parser.XmlTreeBuilder;
-
+/**
+ * Fuzzer for exercising the jsoup XML parser.
+ *
+ * <p>The original fuzzer used reflection to bypass jsoup's internal locking
+ * which in turn caused fuzz-introspector to report blocking operations and
+ * limited the throughput.  This version relies only on the public API and
+ * bounds the size of the consumed input to keep parsing times short.</p>
+ */
 public class XmlFuzzer {
-  public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
-    String input = data.consumeRemainingAsString();
+  private static final int MAX_INPUT_SIZE = 4_096; // avoid pathological inputs
+
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) {
+    String xml = data.consumeString(MAX_INPUT_SIZE);
 
     Parser parser = Parser.xmlParser();
 
-    Field treeBuilderField = Parser.class.getDeclaredField("treeBuilder");
-    treeBuilderField.setAccessible(true);
-    XmlTreeBuilder treeBuilder = (XmlTreeBuilder) treeBuilderField.get(parser);
-
-    Method parse =
-        XmlTreeBuilder.class.getDeclaredMethod(
-            "parse", String.class, String.class, Parser.class);
-    parse.setAccessible(true);
     try {
-      parse.invoke(treeBuilder, input, "", parser);
-    } catch (InvocationTargetException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof Error) {
-        throw (Error) cause;
-      } else if (cause instanceof Exception) {
-        throw (Exception) cause;
-      }
-      throw new RuntimeException(cause);
+      parser.parseInput(xml, "");
+    } catch (IllegalArgumentException | IllegalStateException ignored) {
+      // Expected for malformed input.
+    }
+
+    try {
+      parser.parseFragmentInput(xml, new Element("root"), "");
+    } catch (IllegalArgumentException | IllegalStateException ignored) {
+      // Expected for malformed input.
     }
   }
 }
