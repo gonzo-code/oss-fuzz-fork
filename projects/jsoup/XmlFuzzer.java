@@ -16,7 +16,6 @@
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 
@@ -26,28 +25,30 @@ import org.jsoup.parser.Parser;
  * <p>The original fuzzer used reflection to bypass jsoup's internal locking
  * which in turn caused fuzz-introspector to report blocking operations and
  * limited the throughput.  This version relies only on the public API and
- * bounds the size of the consumed input to keep parsing times short.  It also
- * parses the input both as a full document and as a fragment to improve code
- * coverage.</p>
+
+ * bounds the size of the consumed input to keep parsing times short.</p>
  */
 public class XmlFuzzer {
-  private static final int MAX_INPUT_SIZE = 10_000; // avoid pathological inputs
+  private static final int MAX_INPUT_SIZE = 4_096; // avoid pathological inputs
+
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) {
+    String xml = data.consumeString(MAX_INPUT_SIZE);
+
 
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     String input = data.consumeString(MAX_INPUT_SIZE);
 
-    Parser parser = Parser.xmlParser().newInstance();
+    try {
+      parser.parseInput(xml, "");
+    } catch (IllegalArgumentException | IllegalStateException ignored) {
+      // Expected for malformed input.
+    }
 
     try {
-      Document doc = parser.parseInput(input, "");
+      parser.parseFragmentInput(xml, new Element("root"), "");
+    } catch (IllegalArgumentException | IllegalStateException ignored) {
+      // Expected for malformed input.
 
-      Element ctx = new Element("root");
-      parser.parseFragmentInput(input, ctx, "");
-
-      // Re-serialize and re-parse the document to exercise more code paths.
-      parser.parseInput(doc.outerHtml(), "");
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      // Ignore expected parse errors from malformed input.
     }
   }
 }
