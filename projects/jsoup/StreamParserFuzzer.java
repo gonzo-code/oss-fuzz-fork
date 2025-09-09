@@ -19,16 +19,22 @@ import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import org.jsoup.parser.Parser;
 import org.jsoup.parser.StreamParser;
 
+import java.io.IOException;
+
 public class StreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-    Parser parser = Parser.htmlParser();
-    StreamParser sp = new StreamParser(parser);
-
-    boolean inAttribute = data.consumeBoolean();
+    // Determine a fixed chunk size from the fuzzer input.
+    int chunkSize = data.consumeInt(1, 32);
     String input = data.consumeRemainingAsString();
 
-    sp.parse(input, "");
-    // Exercise entity unescaping with guaranteed '&' to avoid early return.
-    Parser.unescapeEntities(input + "&", inAttribute);
+    StreamParser sp = new StreamParser(Parser.htmlParser());
+    String baseUri = "";
+
+    for (int i = 0; i < input.length(); i += chunkSize) {
+      int end = Math.min(i + chunkSize, input.length());
+      sp.parse(input.substring(i, end), baseUri);
+    }
+    sp.finish();
+
   }
 }

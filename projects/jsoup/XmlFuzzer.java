@@ -25,6 +25,7 @@ import org.jsoup.parser.Parser;
  * <p>The original fuzzer used reflection to bypass jsoup's internal locking
  * which in turn caused fuzz-introspector to report blocking operations and
  * limited the throughput.  This version relies only on the public API and
+
  * bounds the size of the consumed input to keep parsing times short.</p>
  */
 public class XmlFuzzer {
@@ -33,7 +34,9 @@ public class XmlFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     String xml = data.consumeString(MAX_INPUT_SIZE);
 
-    Parser parser = Parser.xmlParser();
+
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) {
+    String input = data.consumeString(MAX_INPUT_SIZE);
 
     try {
       parser.parseInput(xml, "");
@@ -45,6 +48,7 @@ public class XmlFuzzer {
       parser.parseFragmentInput(xml, new Element("root"), "");
     } catch (IllegalArgumentException | IllegalStateException ignored) {
       // Expected for malformed input.
+
     }
   }
 }
