@@ -1,3 +1,6 @@
+
+package org.jsoup.helper;
+
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -5,7 +8,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import org.jsoup.Connection;
-import org.jsoup.helper.HttpConnection;
+import org.jsoup.helper.KeyVal;
+
 
 public class ResponseExecuteFuzzer {
   public static void fuzzerInitialize() {
@@ -30,7 +34,6 @@ public class ResponseExecuteFuzzer {
       request.method(data.pickValue(Connection.Method.values()));
       request.followRedirects(data.consumeBoolean());
       request.timeout(data.consumeInt(0, 1000));
-      request.userAgent(data.consumeString(40));
       int mapSize = data.consumeInt(0, 5);
       Map<String, String> headerMap = new HashMap<>();
       for (int m = 0; m < mapSize; m++) {
@@ -44,12 +47,12 @@ public class ResponseExecuteFuzzer {
       }
       int dataPairs = data.consumeInt(0, 3);
       for (int d = 0; d < dataPairs; d++) {
-        request.data().add(Connection.KeyVal.create(data.consumeString(10), data.consumeString(20)));
+        request.data().add(KeyVal.create(data.consumeString(10), data.consumeString(20)));
       }
 
       HttpConnection.Response previousResponse = null;
       if (data.consumeBoolean()) {
-        previousResponse = new HttpConnection.Response(null);
+        previousResponse = new HttpConnection.Response(new HttpConnection.Request());
         int prevMap = data.consumeInt(0, 5);
         for (int p = 0; p < prevMap; p++) {
           previousResponse.header(data.consumeString(20), data.consumeString(40));
@@ -62,7 +65,7 @@ public class ResponseExecuteFuzzer {
         request.header(data.consumeString(20), data.consumeString(40));
         try {
           HttpConnection.Response.execute(request, previousResponse);
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
           // ignore
         }
       }

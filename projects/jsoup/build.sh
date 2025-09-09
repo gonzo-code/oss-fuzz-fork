@@ -50,8 +50,13 @@ for fuzzer in $(find "$SRC" -maxdepth 1 \( -name '*Fuzzer.java' -o -name 'FuzzTo
   elif [[ "$fuzzer_basename" == "StreamParserFuzzer" ]]; then
     extra_args="-focus_function=org.jsoup.parser.Parser.htmlParser"
   fi
-  javac -cp $BUILD_CLASSPATH "$fuzzer"
-  cp "$(dirname "$fuzzer")/$fuzzer_basename.class" "$OUT/"
+  javac -cp $BUILD_CLASSPATH -d $OUT "$fuzzer"
+  package_name=$(grep -E '^package ' "$fuzzer" | sed 's/package \(.*\);/\1/')
+  if [[ -n "$package_name" ]]; then
+    target_class="$package_name.$fuzzer_basename"
+  else
+    target_class="$fuzzer_basename"
+  fi
 
   # Create an execution wrapper that executes Jazzer with the correct arguments.
   echo "#!/bin/bash
@@ -65,7 +70,7 @@ fi
   LD_LIBRARY_PATH=\"$JVM_LD_LIBRARY_PATH\":\$this_dir \
   \$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
   --cp=$RUNTIME_CLASSPATH \
-  --target_class=$fuzzer_basename \
+  --target_class=$target_class \
   --jvm_args=\"\$mem_settings\" \
   $extra_args \
   \$@" > $OUT/$fuzzer_basename
