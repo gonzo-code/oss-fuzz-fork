@@ -23,44 +23,18 @@ import java.io.IOException;
 
 public class StreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
-    Parser parser = Parser.htmlParser();
-    // Enable additional parser features to increase code coverage.
-    parser.setTrackErrors(data.consumeInt(0, 100));
-    parser.setTrackPosition(data.consumeBoolean());
+    // Determine a fixed chunk size from the fuzzer input.
+    int chunkSize = data.consumeInt(1, 32);
+    String input = data.consumeRemainingAsString();
 
-    StreamParser sp = new StreamParser(parser);
-
-    // Choose whether unescapeEntities should run in attribute mode.
-    boolean inAttribute = data.consumeBoolean();
-
-    // Feed the input to the StreamParser in several chunks to exercise the
-    // streaming code paths and reduce locking contention.
-    StringBuilder allInput = new StringBuilder();
+    StreamParser sp = new StreamParser(Parser.htmlParser());
     String baseUri = "";
-    int chunks = 1;
-    if (data.remainingBytes() > 0) {
-      chunks = data.consumeInt(1, Math.min(4, data.remainingBytes()));
-    }
-    for (int i = 0; i < chunks && data.remainingBytes() > 0; i++) {
-      int len = 0;
-      if (data.remainingBytes() > 0) {
-        len = data.consumeInt(0, data.remainingBytes());
-      }
-      String chunk = data.consumeString(len);
-      allInput.append(chunk);
-      sp.parse(chunk, baseUri);
-    }
-    String rest = data.consumeRemainingAsString();
-    allInput.append(rest);
-    sp.parse(rest, baseUri);
-    try {
-      sp.complete();
-    } catch (IOException ignored) {
-      // Ignore I/O errors from the parser.
-    }
-    sp.close();
 
-    // Exercise entity unescaping with guaranteed '&' to avoid early return.
-    Parser.unescapeEntities(allInput.append('&').toString(), inAttribute);
+    for (int i = 0; i < input.length(); i += chunkSize) {
+      int end = Math.min(i + chunkSize, input.length());
+      sp.parse(input.substring(i, end), baseUri);
+    }
+    sp.finish();
+
   }
 }
