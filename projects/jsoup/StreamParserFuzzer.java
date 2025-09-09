@@ -34,7 +34,10 @@ public class StreamParserFuzzer {
       int end = Math.min(i + chunkSize, input.length());
       sp.parse(input.substring(i, end), baseUri);
     }
-    sp.finish();
-
+    try {
+      sp.complete();
+    } catch (IOException ignored) {
+      // Ignore I/O errors during fuzzing.
+    }
   }
 }
