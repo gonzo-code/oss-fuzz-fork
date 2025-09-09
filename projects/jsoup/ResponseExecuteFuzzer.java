@@ -44,9 +44,7 @@ public class ResponseExecuteFuzzer {
       }
       int dataPairs = data.consumeInt(0, 3);
       for (int d = 0; d < dataPairs; d++) {
-        request
-            .data()
-            .add(Connection.KeyVal.create(data.consumeString(10), data.consumeString(20)));
+        request.data(data.consumeString(10), data.consumeString(20));
       }
 
       HttpConnection.Response previousResponse = null;
