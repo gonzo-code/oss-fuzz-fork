@@ -19,6 +19,8 @@ import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import org.jsoup.parser.Parser;
 import org.jsoup.parser.StreamParser;
 
+import java.io.IOException;
+
 public class StreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     // Determine a fixed chunk size from the fuzzer input.
@@ -33,5 +35,6 @@ public class StreamParserFuzzer {
       sp.parse(input.substring(i, end), baseUri);
     }
     sp.finish();
+
   }
 }
