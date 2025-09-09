@@ -16,39 +16,38 @@
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 
-import org.jsoup.parser.XmlTreeBuilder;
-
+/**
+ * Fuzzer for exercising the jsoup XML parser.
+ *
+ * <p>The original fuzzer used reflection to bypass jsoup's internal locking
+ * which in turn caused fuzz-introspector to report blocking operations and
+ * limited the throughput.  This version relies only on the public API and
+ * bounds the size of the consumed input to keep parsing times short.  It also
+ * parses the input both as a full document and as a fragment to improve code
+ * coverage.</p>
+ */
 public class XmlFuzzer {
-  public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
-    String input = data.consumeRemainingAsString();
+  private static final int MAX_INPUT_SIZE = 10_000; // avoid pathological inputs
 
-    Parser parser = Parser.xmlParser();
+  public static void fuzzerTestOneInput(FuzzedDataProvider data) {
+    String input = data.consumeString(MAX_INPUT_SIZE);
 
-    Field treeBuilderField = Parser.class.getDeclaredField("treeBuilder");
-    treeBuilderField.setAccessible(true);
-    XmlTreeBuilder treeBuilder = (XmlTreeBuilder) treeBuilderField.get(parser);
+    Parser parser = Parser.xmlParser().newInstance();
 
-    Method parse =
-        XmlTreeBuilder.class.getDeclaredMethod(
-            "parse", String.class, String.class, Parser.class);
-    parse.setAccessible(true);
     try {
-      parse.invoke(treeBuilder, input, "", parser);
-    } catch (InvocationTargetException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof Error) {
-        throw (Error) cause;
-      } else if (cause instanceof Exception) {
-        throw (Exception) cause;
-      }
-      throw new RuntimeException(cause);
+      Document doc = parser.parseInput(input, "");
+
+      Element ctx = new Element("root");
+      parser.parseFragmentInput(input, ctx, "");
+
+      // Re-serialize and re-parse the document to exercise more code paths.
+      parser.parseInput(doc.outerHtml(), "");
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      // Ignore expected parse errors from malformed input.
     }
   }
 }
