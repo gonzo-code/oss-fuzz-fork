@@ -42,7 +42,7 @@ fi
 # All .jar and .class files lie in the same directory as the fuzzer at runtime.
 RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_dir
 
-for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
+for fuzzer in $(find "$SRC" -maxdepth 1 \( -name '*Fuzzer.java' -o -name 'FuzzTokenizerTreeBuilder.java' \)); do
   fuzzer_basename=$(basename -s .java "$fuzzer")
   extra_args=""
   if [[ "$fuzzer_basename" == "XmlFuzzer" ]]; then
@@ -71,3 +71,15 @@ fi
   \$@" > $OUT/$fuzzer_basename
   chmod u+x $OUT/$fuzzer_basename
 done
+
+# Create a basic seed corpus for FuzzTokenizerTreeBuilder if none is provided.
+mkdir -p $OUT/FuzzTokenizerTreeBuilder_seed_corpus
+cat <<'EOF' > $OUT/FuzzTokenizerTreeBuilder_seed_corpus/misnested.html
+<b><i></b></i>
+EOF
+cat <<'EOF' > $OUT/FuzzTokenizerTreeBuilder_seed_corpus/foreign.html
+<svg><script></script><circle></circle></svg>
+EOF
+cat <<'EOF' > $OUT/FuzzTokenizerTreeBuilder_seed_corpus/selfclosing.html
+<div />text
+EOF
