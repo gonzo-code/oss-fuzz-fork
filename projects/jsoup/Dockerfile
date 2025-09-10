@@ -35,5 +35,5 @@ RUN git clone --depth 1 https://github.com/dvyukov/go-fuzz-corpus && \
 RUN git clone --depth 1 https://github.com/jhy/jsoup/
 
 COPY build.sh $SRC/
-COPY HtmlFuzzer.java XmlFuzzer.java StreamParserFuzzer.java FuzzTokenizerTreeBuilder.java ResponseExecuteFuzzer.java $SRC/
+COPY HtmlFuzzer.java XmlFuzzer.java StreamParserFuzzer.java FuzzTokenizerTreeBuilder.java UrlBuilderFuzzer.java $SRC/
 WORKDIR $SRC/jsoup
