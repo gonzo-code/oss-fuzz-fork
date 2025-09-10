@@ -39,6 +39,7 @@ public class HtmlFuzzer {
 
     for (Element element : doc.getAllElements()) {
       switch (Math.floorMod(data.consumeInt(), 3)) {
+
         case 0:
           element.tagName();
           break;
