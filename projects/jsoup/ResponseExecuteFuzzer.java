@@ -84,7 +84,7 @@ public class ResponseExecuteFuzzer {
     request.followRedirects(data.consumeBoolean());
     request.maxBodySize(data.consumeInt(0, 1_000_000));
     request.timeout(data.consumeInt(0, 5_000));
-    request.userAgent(data.consumeString(40));
+    request.header("User-Agent", data.consumeString(40));
 
     try {
       HttpConnection.Response res = HttpConnection.Response.execute(request, null);
