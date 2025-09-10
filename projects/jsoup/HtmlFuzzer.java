@@ -17,12 +17,16 @@
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 
 import java.io.StringReader;
+import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.ParseSettings;
 import org.jsoup.parser.Parser;
+import org.jsoup.parser.Tag;
+import org.jsoup.parser.TagSet;
 
 public class HtmlFuzzer {
   private static final int MAX_INPUT_SIZE = 10_000;
@@ -35,6 +39,30 @@ public class HtmlFuzzer {
     parser.setTrackErrors(data.consumeInt(0, 10));
     parser.setTrackPosition(data.consumeBoolean());
     parser.settings(new ParseSettings(data.consumeBoolean(), data.consumeBoolean()));
+
+    TagSet tagSet = TagSet.Html();
+    int ops = data.consumeInt(0, 100);
+    for (int i = 0; i < ops; i++) {
+      String tagName = data.consumeString(20);
+      if (tagName.isEmpty()) {
+        continue;
+      }
+      if (data.consumeBoolean()) {
+        tagSet.add(new Tag(tagName));
+      } else {
+        try {
+          Field field = TagSet.class.getDeclaredField("tags");
+          field.setAccessible(true);
+          Map<String, Map<String, Tag>> tags = (Map<String, Map<String, Tag>>) field.get(tagSet);
+          for (Map<String, Tag> nsTags : tags.values()) {
+            nsTags.remove(tagName);
+          }
+        } catch (ReflectiveOperationException ignored) {
+          // ignore
+        }
+      }
+    }
+    parser.tagSet(tagSet);
     Document doc = parser.parseInput(new StringReader(html), baseUri);
     if (!html.isEmpty()) {
       int start = data.consumeInt(0, html.length());
