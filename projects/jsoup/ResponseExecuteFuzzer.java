@@ -60,7 +60,8 @@ public class ResponseExecuteFuzzer {
       h++;
     }
 
-    byte[] body = data.consumeRemainingAsBytes();
+    int bodyLen = Math.min(data.remainingBytes(), 4096);
+    byte[] body = data.consumeBytes(bodyLen);
     byte[] encBody = body;
     try {
       if ("gzip".equalsIgnoreCase(contentEncoding)) {
