@@ -38,7 +38,8 @@ public class HtmlFuzzer {
     Jsoup.parseBodyFragment(html);
 
     for (Element element : doc.getAllElements()) {
-      switch (data.consumeInt(3)) {
+      switch (Math.floorMod(data.consumeInt(), 3)) {
+
         case 0:
           element.tagName();
           break;
