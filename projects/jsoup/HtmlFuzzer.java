@@ -36,6 +36,14 @@ public class HtmlFuzzer {
     parser.setTrackPosition(data.consumeBoolean());
     parser.settings(new ParseSettings(data.consumeBoolean(), data.consumeBoolean()));
     Document doc = parser.parseInput(new StringReader(html), baseUri);
+    if (!html.isEmpty()) {
+      int start = data.consumeInt(0, html.length());
+      int end = data.consumeInt(start, html.length());
+      String sub = html.substring(start, end);
+      boolean inAttr = data.consumeBoolean();
+      parser.unescapeEntities(sub, inAttr);
+      Parser.unescapeEntities(sub, inAttr);
+    }
     parser.parseFragmentInput(new StringReader(html), new Element("ctx"), baseUri);
     parser.getErrors();
 
