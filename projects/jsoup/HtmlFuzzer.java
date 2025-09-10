@@ -21,6 +21,7 @@ import java.io.StringReader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.ParseSettings;
 import org.jsoup.parser.Parser;
 
 public class HtmlFuzzer {
@@ -31,8 +32,12 @@ public class HtmlFuzzer {
     String html = data.consumeString(MAX_INPUT_SIZE);
 
     Parser parser = Parser.htmlParser();
+    parser.setTrackErrors(data.consumeInt(0, 10));
+    parser.setTrackPosition(data.consumeBoolean());
+    parser.settings(new ParseSettings(data.consumeBoolean(), data.consumeBoolean()));
     Document doc = parser.parseInput(new StringReader(html), baseUri);
     parser.parseFragmentInput(new StringReader(html), new Element("ctx"), baseUri);
+    parser.getErrors();
 
     Jsoup.parse(html);
     Jsoup.parseBodyFragment(html);
