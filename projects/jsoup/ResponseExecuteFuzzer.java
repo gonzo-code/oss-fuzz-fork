@@ -17,7 +17,11 @@ import org.jsoup.Connection;
 import org.jsoup.helper.HttpConnection;
 
 public class ResponseExecuteFuzzer {
-  public static void fuzzerInitialize() {}
+  public static void fuzzerInitialize() {
+    // Use the classic UrlConnectionExecutor rather than the Java 11+ HttpClient
+    // implementation to ensure the custom FuzzHttpURLConnection is exercised.
+    System.setProperty("jsoup.useHttpClient", "false");
+  }
 
   public static void fuzzerTearDown() {}
 
