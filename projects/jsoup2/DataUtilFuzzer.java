@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.jsoup.helper.DataUtil;
 import org.jsoup.internal.StringUtil;
+
 import org.jsoup.nodes.Document;
 
 public class DataUtilFuzzer {
@@ -45,3 +46,4 @@ public class DataUtilFuzzer {
       }
     }
   }
+
