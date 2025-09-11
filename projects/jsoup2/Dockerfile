@@ -16,22 +16,22 @@
 
 FROM gcr.io/oss-fuzz-base/base-builder-jvm
 
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    jq \
+    git \
+    python3 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.zip -o maven.zip && \
     unzip maven.zip -d $SRC/maven && \
     rm -rf maven.zip
 
 ENV MVN $SRC/maven/apache-maven-3.6.3/bin/mvn
 
-RUN git clone --depth 1 https://github.com/google/fuzzing && \
-    cp fuzzing/dictionaries/html.dict $SRC/HtmlFuzzer.dict && \
-    cp fuzzing/dictionaries/xml.dict $SRC/XmlFuzzer.dict && \
-    cp fuzzing/dictionaries/xml.dict $SRC/OGXmlFuzzer.dict && \
-    rm -rf fuzzing
-
-RUN git clone --depth 1 https://github.com/dvyukov/go-fuzz-corpus && \
-    zip -j $SRC/OGXmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
-    zip -j $SRC/XmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
-    rm -rf go-fuzz-corpus
+ENV HTML5LIB_SHA=f994590f528ac8b6073665791ddb1ed85c66dfb2
+ENV WPT_SHA=5045ad52dc8584dbaf3ec4c0a7b958eb0b073380
 
 RUN git clone --depth 1 https://github.com/jhy/jsoup/
 
