@@ -5,7 +5,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.helper.W3CDom;
 import org.jsoup.helper.DataUtil;
-import org.jsoup.helper.UrlBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,11 +31,13 @@ public class ParseFuzzer {
           null // base URI
       );
 
-      // 4. URL handling path (UrlBuilder)
+      // 4. URL handling path using a base URI
       try {
         String base = "http://example.com/";
         URL url = new URL(base + html.replaceAll("[^a-zA-Z0-9]", ""));
-        new UrlBuilder(url).build();
+        // Parsing with a user-provided base URL exercises URL normalization without
+        // accessing internal helper classes.
+        Jsoup.parse(html, url.toString());
       } catch (Exception ignored) {}
 
       // 5. W3C DOM conversion (deeper tree traversal)
