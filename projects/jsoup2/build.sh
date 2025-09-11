@@ -58,10 +58,10 @@ for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
   fuzzer_basename=$(basename -s .java "$fuzzer")
   extra_args=""
   wrapper_name="$fuzzer_basename"
-  if [[ "$fuzzer_basename" == "OGXmlFuzzer" ]]; then
-    extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
-  fi
-  javac -cp $BUILD_CLASSPATH -d $OUT "$fuzzer"
+    if [[ "$fuzzer_basename" == "OGXmlFuzzer" ]]; then
+      extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
+    fi
+    javac -cp $BUILD_CLASSPATH -d $OUT "$fuzzer"
   package_name=$(grep -E '^package ' "$fuzzer" | sed 's/package \(.*\);/\1/')
   if [[ -n "$package_name" ]]; then
     target_class="$package_name.$fuzzer_basename"
@@ -71,11 +71,12 @@ for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
 
   target_class_flag=$target_class
   extra_env=""
-  if [[ "$fuzzer_basename" == "DataUtilFuzzer" ]]; then
-    wrapper_name="datautil_fuzzer"
-    extra_env="export FUZZ_TARGET_CLASS=$target_class"
-    target_class_flag="\$FUZZ_TARGET_CLASS"
-  fi
+    if [[ "$fuzzer_basename" == "DataUtilFuzzer" ]]; then
+      wrapper_name="datautil_fuzzer"
+      extra_env="export FUZZ_TARGET_CLASS=$target_class"
+      target_class_flag="\$FUZZ_TARGET_CLASS"
+      extra_args="-dict=\$this_dir/${wrapper_name}.dict -focus_function=org.jsoup.internal.StringUtil.borrowBuilder"
+    fi
 
   # Create an execution wrapper that executes Jazzer with the correct arguments.
   echo "#!/bin/bash
