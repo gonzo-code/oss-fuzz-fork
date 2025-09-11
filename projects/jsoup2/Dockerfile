@@ -35,6 +35,7 @@ RUN git clone --depth 1 https://github.com/jhy/jsoup/
 
 COPY build.sh $SRC/
 COPY HtmlFuzzer.java XmlFuzzer.java DataUtilFuzzer.java $SRC/
-COPY seeds/datautil_corpus $OUT/datautil_corpus
-COPY dicts/encodings.dict $OUT/encodings.dict
+COPY seeds/datautil_corpus $SRC/datautil_corpus
+COPY dicts/encodings.dict $SRC/encodings.dict
+
 WORKDIR $SRC/jsoup

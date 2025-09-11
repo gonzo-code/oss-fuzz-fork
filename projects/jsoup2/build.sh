@@ -19,7 +19,9 @@
 mv $SRC/{*.zip,*.dict} $OUT
 
 # Prepare resources for the DataUtil fuzzer.
-cp -r $OUT/datautil_corpus $OUT/datautil_fuzzer_seed_corpus
+
+cp -r $SRC/datautil_corpus $OUT/datautil_fuzzer_seed_corpus
+
 cp $OUT/encodings.dict $OUT/datautil_fuzzer.dict
 
 # Remove central publishing plugin that pulls additional build extensions.
