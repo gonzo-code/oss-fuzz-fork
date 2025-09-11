@@ -7,6 +7,12 @@ import java.io.InputStream;
 import org.jsoup.helper.DataUtil;
 import org.jsoup.nodes.Document;
 
+// Dictionary
+// Use this with the libFuzzer -dict=DICT.file flag
+//
+// Fuzzer function priority
+// Use one of these functions as input to libFuzzer with flag -focus_function name
+// -focus_function=org.jsoup.internal.StringUtil.borrowBuilder
 public class DataUtilFuzzer {
     private static final String[] CHARSETS = {
         "UTF-8", "UTF-16", "UTF-16LE", "UTF-16BE", "UTF-32",
