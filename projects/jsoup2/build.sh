@@ -24,6 +24,7 @@ for b64 in $OUT/datautil_fuzzer_seed_corpus/*.b64; do
   base64 -d "$b64" > "${b64%.b64}"
   rm "$b64"
 done
+
 cp $OUT/encodings.dict $OUT/datautil_fuzzer.dict
 
 # Remove central publishing plugin that pulls additional build extensions.
