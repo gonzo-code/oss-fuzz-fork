@@ -58,7 +58,7 @@ for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
   fuzzer_basename=$(basename -s .java "$fuzzer")
   extra_args=""
   wrapper_name="$fuzzer_basename"
-  if [[ "$fuzzer_basename" == "XmlFuzzer" ]]; then
+  if [[ "$fuzzer_basename" == "OGXmlFuzzer" ]]; then
     extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
   fi
   javac -cp $BUILD_CLASSPATH -d $OUT "$fuzzer"

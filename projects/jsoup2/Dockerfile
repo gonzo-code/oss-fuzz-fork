@@ -23,12 +23,13 @@ RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-
 ENV MVN $SRC/maven/apache-maven-3.6.3/bin/mvn
 
 RUN git clone --depth 1 https://github.com/google/fuzzing && \
-    mv fuzzing/dictionaries/html.dict $SRC/HtmlFuzzer.dict && \
-    mv fuzzing/dictionaries/xml.dict $SRC/XmlFuzzer.dict && \
+    cp fuzzing/dictionaries/html.dict $SRC/HtmlFuzzer.dict && \
+    cp fuzzing/dictionaries/html.dict $SRC/OGHtmlFuzzer.dict && \
+    cp fuzzing/dictionaries/xml.dict $SRC/OGXmlFuzzer.dict && \
     rm -rf fuzzing
 
 RUN git clone --depth 1 https://github.com/dvyukov/go-fuzz-corpus && \
-    zip -j $SRC/XmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
+    zip -j $SRC/OGXmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
     rm -rf go-fuzz-corpus
 
 RUN git clone --depth 1 https://github.com/jhy/jsoup/
@@ -36,7 +37,7 @@ RUN git clone --depth 1 https://github.com/jhy/jsoup/
 COPY build.sh $SRC/
 
 
-COPY HtmlFuzzer.java XmlFuzzer.java DataUtilFuzzer.java ParseFuzzer.java $SRC/
+COPY HtmlFuzzer.java DataUtilFuzzer.java ParseFuzzer.java OGHtmlFuzzer.java OGXmlFuzzer.java $SRC/
 COPY seeds/datautil_corpus $SRC/datautil_corpus
 COPY dicts/encodings.dict $SRC/encodings.dict
 

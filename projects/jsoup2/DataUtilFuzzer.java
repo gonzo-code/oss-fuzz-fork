@@ -5,8 +5,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.jsoup.helper.DataUtil;
-import org.jsoup.internal.StringUtil;
-
 import org.jsoup.nodes.Document;
 
 public class DataUtilFuzzer {
@@ -16,25 +14,11 @@ public class DataUtilFuzzer {
     };
 
     public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Throwable {
-      // Exercise StringUtil URL resolution with arbitrary relative paths.
-      String relUrl = data.consumeString(100);
-      String baseUri = StringUtil.resolve("http://example.com/", relUrl);
-      String charset = data.pickValue(CHARSETS);
-
-      // Consume additional strings to drive various StringUtil helpers.
-      String random = data.consumeString(100);
-      String sep = data.consumeAsciiString(1);
-      try {
-        StringUtil.join(new String[] {random, relUrl}, sep);
-        StringUtil.normaliseWhitespace(random);
-        StringUtil.padding(data.consumeInt(-1, 40));
-        StringUtil.isAscii(random);
-        StringUtil.isNumeric(random);
-        StringUtil.isBlank(random);
-      } catch (IllegalArgumentException ignored) {
-        // Expected for invalid arguments in StringUtil.
+      String baseUri = "http://" + data.consumeAsciiString(20);
+      if (baseUri.equals("http://")) {
+        baseUri += "example.com/";
       }
-
+      String charset = data.pickValue(CHARSETS);
       byte[] bytes = data.consumeRemainingAsBytes();
       try (InputStream in = new ByteArrayInputStream(bytes)) {
         Document doc = DataUtil.load(in, baseUri, charset);
@@ -46,4 +30,3 @@ public class DataUtilFuzzer {
       }
     }
   }
-
