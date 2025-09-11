@@ -29,23 +29,24 @@ import org.jsoup.parser.Parser;
  */
 public class XmlFuzzer {
   private static final int MAX_INPUT_SIZE = 4_096; // avoid pathological inputs
+  private static final Parser PARSER_TEMPLATE = Parser.xmlParser();
+  private static final Element ROOT = new Element("root");
 
   public static void fuzzerTestOneInput(FuzzedDataProvider data) {
     String xml = data.consumeString(MAX_INPUT_SIZE);
 
-    Parser parser = Parser.xmlParser();
-
+    Parser parser = PARSER_TEMPLATE.newInstance();
     try {
       parser.parseInput(xml, "");
     } catch (IllegalArgumentException | IllegalStateException ignored) {
       // Expected for malformed input.
     }
 
+    parser = PARSER_TEMPLATE.newInstance();
     try {
-      parser.parseFragmentInput(xml, new Element("root"), "");
+      parser.parseFragmentInput(xml, ROOT, "");
     } catch (IllegalArgumentException | IllegalStateException ignored) {
       // Expected for malformed input.
     }
   }
 }
-
