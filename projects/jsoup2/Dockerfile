@@ -1,28 +1,4 @@
-# Copyright 2021 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-################################################################################
-
 FROM gcr.io/oss-fuzz-base/base-builder-jvm
-
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    jq \
-    git \
-    python3 && \
-    rm -rf /var/lib/apt/lists/*
 
 RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.zip -o maven.zip && \
     unzip maven.zip -d $SRC/maven && \
@@ -30,8 +6,16 @@ RUN curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-
 
 ENV MVN $SRC/maven/apache-maven-3.6.3/bin/mvn
 
-ENV HTML5LIB_SHA=f994590f528ac8b6073665791ddb1ed85c66dfb2
-ENV WPT_SHA=5045ad52dc8584dbaf3ec4c0a7b958eb0b073380
+RUN git clone --depth 1 https://github.com/google/fuzzing && \
+    cp fuzzing/dictionaries/html.dict $SRC/HtmlFuzzer.dict && \
+    cp fuzzing/dictionaries/xml.dict $SRC/XmlFuzzer.dict && \
+    cp fuzzing/dictionaries/xml.dict $SRC/OGXmlFuzzer.dict && \
+    rm -rf fuzzing
+
+RUN git clone --depth 1 https://github.com/dvyukov/go-fuzz-corpus && \
+    zip -j $SRC/OGXmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
+    zip -j $SRC/XmlFuzzer_seed_corpus.zip go-fuzz-corpus/xml/corpus/* && \
+    rm -rf go-fuzz-corpus
 
 RUN git clone --depth 1 https://github.com/jhy/jsoup/
 
