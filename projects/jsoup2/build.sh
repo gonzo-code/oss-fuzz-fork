@@ -18,6 +18,16 @@
 # Move seed corpus and dictionary.
 mv $SRC/{*.zip,*.dict} $OUT
 
+# Prepare resources for the DataUtil fuzzer.
+cp -r $SRC/datautil_corpus $OUT/datautil_fuzzer_seed_corpus
+if ls "$OUT/datautil_fuzzer_seed_corpus"/*.b64 1> /dev/null 2>&1; then
+  for b64 in "$OUT/datautil_fuzzer_seed_corpus"/*.b64; do
+    base64 -d "$b64" > "${b64%.b64}"
+    rm "$b64"
+  done
+fi
+cp $OUT/encodings.dict $OUT/datautil_fuzzer.dict
+
 # Remove central publishing plugin that pulls additional build extensions.
 
 perl -0 -i -pe 's|<plugin>\s*<groupId>org\.sonatype\.central</groupId>.*?</plugin>||s' pom.xml
@@ -45,6 +55,7 @@ RUNTIME_CLASSPATH=$(echo $ALL_JARS | xargs printf -- "\$this_dir/%s:"):\$this_di
 for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
   fuzzer_basename=$(basename -s .java "$fuzzer")
   extra_args=""
+  wrapper_name="$fuzzer_basename"
   if [[ "$fuzzer_basename" == "XmlFuzzer" ]]; then
     extra_args="-focus_function=org.jsoup.parser.XmlTreeBuilder.*"
   fi
@@ -56,10 +67,19 @@ for fuzzer in $(find "$SRC" -maxdepth 1 -name '*Fuzzer.java'); do
     target_class="$fuzzer_basename"
   fi
 
+  target_class_flag=$target_class
+  extra_env=""
+  if [[ "$fuzzer_basename" == "DataUtilFuzzer" ]]; then
+    wrapper_name="datautil_fuzzer"
+    extra_env="export FUZZ_TARGET_CLASS=$target_class"
+    target_class_flag="\$FUZZ_TARGET_CLASS"
+  fi
+
   # Create an execution wrapper that executes Jazzer with the correct arguments.
   echo "#!/bin/bash
 # LLVMFuzzerTestOneInput for fuzzer detection.
 this_dir=\$(dirname \"\$0\")
+${extra_env}
 if [[ \"\$@\" =~ (^| )-runs=[0-9]+($| ) ]]; then
   mem_settings='-Xmx1900m:-Xss900k'
 else
@@ -68,10 +88,10 @@ fi
   LD_LIBRARY_PATH=\"$JVM_LD_LIBRARY_PATH\":\$this_dir \
   \$this_dir/jazzer_driver --agent_path=\$this_dir/jazzer_agent_deploy.jar \
   --cp=$RUNTIME_CLASSPATH \
-  --target_class=$target_class \
+  --target_class=${target_class_flag} \
   --jvm_args=\"\$mem_settings\" \
   $extra_args \
-  \$@" > $OUT/$fuzzer_basename
-  chmod u+x $OUT/$fuzzer_basename
+  \$@" > $OUT/$wrapper_name
+  chmod u+x $OUT/$wrapper_name
 done
 
