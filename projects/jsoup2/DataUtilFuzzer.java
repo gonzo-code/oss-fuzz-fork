@@ -8,19 +8,26 @@ import org.jsoup.helper.DataUtil;
 import org.jsoup.nodes.Document;
 
 public class DataUtilFuzzer {
-  public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Throwable {
-    byte[] bytes = data.consumeRemainingAsBytes();
-    String baseUri = data.consumeString(1000);
-    String charset = data.consumeString(40);
-    try (InputStream in = new ByteArrayInputStream(bytes)) {
-      Document doc = DataUtil.load(in, baseUri, charset);
-      if (doc != null) {
-        doc.outerHtml();
+    private static final String[] CHARSETS = {
+        "UTF-8", "UTF-16", "UTF-16LE", "UTF-16BE", "UTF-32",
+        "ISO-8859-1", "windows-1252", "Shift_JIS", "KOI8-R", "Big5", null
+    };
+
+    public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Throwable {
+      String baseUri = "http://" + data.consumeAsciiString(20);
+      if (baseUri.equals("http://")) {
+        baseUri += "example.com/";
       }
-    } catch (IllegalArgumentException | IOException e) {
-      // Known exception types.
-    } catch (Throwable t) {
-      throw t;
+      String charset = data.pickValue(CHARSETS);
+      byte[] bytes = data.consumeRemainingAsBytes();
+      try (InputStream in = new ByteArrayInputStream(bytes)) {
+        Document doc = DataUtil.load(in, baseUri, charset);
+        if (doc != null) {
+          doc.outerHtml();
+        }
+      } catch (IllegalArgumentException | IOException e) {
+        // Known exception types.
+      }
     }
   }
-}
+

@@ -19,8 +19,11 @@
 mv $SRC/{*.zip,*.dict} $OUT
 
 # Prepare resources for the DataUtil fuzzer.
-
 cp -r $SRC/datautil_corpus $OUT/datautil_fuzzer_seed_corpus
+for b64 in $OUT/datautil_fuzzer_seed_corpus/*.b64; do
+  base64 -d "$b64" > "${b64%.b64}"
+  rm "$b64"
+done
 
 cp $OUT/encodings.dict $OUT/datautil_fuzzer.dict
 
