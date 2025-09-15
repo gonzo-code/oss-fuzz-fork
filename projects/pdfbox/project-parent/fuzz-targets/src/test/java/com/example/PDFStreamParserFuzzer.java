@@ -8,6 +8,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 
+import java.io.OutputStream;
+
 import java.util.List;
 
 public class PDFStreamParserFuzzer {
@@ -21,12 +23,15 @@ public class PDFStreamParserFuzzer {
       doc.addPage(page);
 
       COSStream cosStream = new COSStream();
-      cosStream.setItem("Length", new COSArray()); // provoke edge cases around Length handling
+      cosStream.setItem(COSName.LENGTH, new COSArray()); // provoke edge cases around Length handling
       cosStream.setItem(COSName.FILTER, new COSArray()); // empty filters array
-      cosStream.createOutputStream().write(streamBytes);
+      try (OutputStream output = cosStream.createOutputStream()) {
+        output.write(streamBytes);
+      }
 
-      PDFStreamParser parser = new PDFStreamParser(streamBytes);
-      List<Object> tokens = parser.parse(); // exercises inline images, operators, operands
+      PDFStreamParser parser = new PDFStreamParser(cosStream);
+      parser.parse();
+      List<Object> tokens = parser.getTokens(); // exercises inline images, operators, operands
       if (!tokens.isEmpty()) {
         tokens.get(0); // force object creation paths
       }
