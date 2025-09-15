@@ -1,14 +1,14 @@
 package com.example;
 
 import com.code_intelligence.jazzer.api.FuzzedDataProvider;
-import org.apache.pdfbox.contentstream.PDContentStream;
 import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 
-import java.io.ByteArrayInputStream;
+import java.util.List;
 
 public class PDFStreamParserFuzzer {
   public static void fuzzerTestOneInput(FuzzedDataProvider data) throws Exception {
@@ -22,15 +22,13 @@ public class PDFStreamParserFuzzer {
 
       COSStream cosStream = new COSStream();
       cosStream.setItem("Length", new COSArray()); // provoke edge cases around Length handling
-      cosStream.setFilters(new COSArray());        // empty filters array
+      cosStream.setItem(COSName.FILTER, new COSArray()); // empty filters array
       cosStream.createOutputStream().write(streamBytes);
 
-      PDContentStream cs = new PDContentStream(page);
-      PDFStreamParser parser = new PDFStreamParser(new ByteArrayInputStream(streamBytes));
-      parser.parse(); // exercises inline images, operators, operands
-      // Touch the tokens list to force object creation paths.
-      if (parser.getTokens() != null && !parser.getTokens().isEmpty()) {
-        parser.getTokens().get(0);
+      PDFStreamParser parser = new PDFStreamParser(streamBytes);
+      List<Object> tokens = parser.parse(); // exercises inline images, operators, operands
+      if (!tokens.isEmpty()) {
+        tokens.get(0); // force object creation paths
       }
     }
   }
