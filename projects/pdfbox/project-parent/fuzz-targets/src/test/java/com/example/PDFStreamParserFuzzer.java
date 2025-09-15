@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdfparser.PDFStreamParser;
 
 import java.io.OutputStream;
+
 import java.util.List;
 
 public class PDFStreamParserFuzzer {
